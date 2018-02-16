@@ -7,7 +7,7 @@ For example to generate file `output.txt` with 5000 lines of random words execut
  ./generate_file.py -o output.txt 5000
 ```
 
-##Sort file
+## Sort file
 First you need to build application.
 ```
 gradle build
