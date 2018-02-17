@@ -12,11 +12,11 @@ import java.nio.file.*;
  * Usage:
  *   java SortFile <source.txt> <target.txt> <block_size>
  *
- * */
+ **/
 public class SortFile {
 
   public static void main(String[] args) throws IOException {
-    if(args.length < 3) {
+    if (args.length < 3) {
       System.out.println("Usage: java SortFile <file_to_sort> <result_file> <max_file_block_size>");
       System.out.println("For example sort file with 1Kb blocks: java SortFile file.txt result.txt 1024");
       System.exit(0);
@@ -46,20 +46,20 @@ public class SortFile {
     List<File> files = new ArrayList<>();
     try (BufferedReader fbr = new BufferedReader(new InputStreamReader(
                                      new FileInputStream(in), defaultCharset))) {
-        String line = "";
-        List<String> lines = new ArrayList<>();
-        while (line != null) {
-          long currBlockSize = 0L;
-          while ((currBlockSize < maxBlockSizeInBytes) && (line = fbr.readLine()) != null) {
-            if (line.trim().length() > 0) { // skip empty line
-              lines.add(line);
-              currBlockSize += line.length() * 2; // character in java String is in UTF-16;
-            }
+      String line = "";
+      List<String> lines = new ArrayList<>();
+      while (line != null) {
+        long currBlockSize = 0L;
+        while ((currBlockSize < maxBlockSizeInBytes) && (line = fbr.readLine()) != null) {
+          if (line.trim().length() > 0) { // skip empty line
+            lines.add(line);
+            currBlockSize += line.length() * 2; // character in java String is in UTF-16;
           }
-          File chunkFile = sortAndSave(lines, targetDir); 
-          files.add(chunkFile);
-          lines.clear();
         }
+        File chunkFile = sortAndSave(lines, targetDir); 
+        files.add(chunkFile);
+        lines.clear();
+      }
     }
     return files;
   }
@@ -85,11 +85,13 @@ public class SortFile {
       CachedBR br = new CachedBR(file);
       if (br.isNotEmpty()) {
         queue.add(br);
+      } else {
+        br.close();
       }
     }
     try (BufferedWriter fbw = new BufferedWriter(new OutputStreamWriter(
                         new FileOutputStream(targetFile), defaultCharset))) {
-      while ( queue.size() > 0) {
+      while (queue.size() > 0) {
         CachedBR br = queue.poll();
         String line = br.pop();
         fbw.write(line);
@@ -99,6 +101,11 @@ public class SortFile {
         } else {
           br.close();
         }
+      }
+    } finally {
+      if (!queue.isEmpty()) { // if write to file failed
+        for (CachedBR br: queue)
+          br.close();
       }
     }
   }
